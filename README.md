@@ -442,7 +442,9 @@ PHP 5.4.13 (cli) (built: Mar 15 2013 11:27:51)
 ### MacOS(___Shies) ###
 
 MacOS Sierra/10.12.3 (unix)
+
 Nginx/1.12.0         (web)
+
 PHP 5.6.30           (cli) (built: Mar 15 2017 19:52:30)
 
 # Contributors #
