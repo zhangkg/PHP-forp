@@ -17,10 +17,8 @@
   +----------------------------------------------------------------------+
  */
 
-#ifndef FORP_LOG_H
-#define FORP_LOG_H
-
-#define FORP_LOG_DEPTH    2
+#ifndef FORP_ANNOTATION_H
+#define FORP_ANNOTATION_H
 
 #include "php.h"
 
@@ -28,29 +26,15 @@
 #include "TSRM.h"
 #endif
 
-typedef struct forp_var_t {
-    char *type;
-    char *name;
-    char *key;
-    char *level;
-    char *value;
-    char *class;
-    struct forp_var_t **arr;
-    uint arr_len;
-    uint is_ref;
-    int refcount;
-    int stack_idx;
-} forp_var_t;
+void forp_annotation_args(char *str, char ***args, int *args_count TSRMLS_DC);
 
-forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC);
+char *forp_annotation_tok(const char *doc_comment, char *tag TSRMLS_DC);
 
-zval *forp_find_symbol(zend_string *name TSRMLS_DC);
+char *forp_annotation_string(const char *doc_comment, char *tag TSRMLS_DC);
 
-//void forp_inspect_symbol(char *name TSRMLS_DC);
+void forp_annotation_array(const char *doc_comment, char *tag, char ***args, int *args_count TSRMLS_DC);
 
-void forp_inspect_zval(char* name, zval *expr TSRMLS_DC);
-
-#endif  /* FORP_LOG_H */
+#endif  /* FORP_ANNOTATION_H */
 
 /*
  * Local variables:

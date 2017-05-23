@@ -17,40 +17,23 @@
   +----------------------------------------------------------------------+
  */
 
-#ifndef FORP_LOG_H
-#define FORP_LOG_H
-
-#define FORP_LOG_DEPTH    2
+#ifndef FORP_JSON_H
+#define FORP_JSON_H
 
 #include "php.h"
+#include "forp_log.h"
 
 #ifdef ZTS
 #include "TSRM.h"
 #endif
 
-typedef struct forp_var_t {
-    char *type;
-    char *name;
-    char *key;
-    char *level;
-    char *value;
-    char *class;
-    struct forp_var_t **arr;
-    uint arr_len;
-    uint is_ref;
-    int refcount;
-    int stack_idx;
-} forp_var_t;
+void forp_json(TSRMLS_D);
 
-forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC);
+void forp_json_google_tracer(char* filepath TSRMLS_DC);
 
-zval *forp_find_symbol(zend_string *name TSRMLS_DC);
+void forp_json_inspect(forp_var_t *var TSRMLS_DC);
 
-//void forp_inspect_symbol(char *name TSRMLS_DC);
-
-void forp_inspect_zval(char* name, zval *expr TSRMLS_DC);
-
-#endif  /* FORP_LOG_H */
+#endif  /* FORP_JSON_H */
 
 /*
  * Local variables:

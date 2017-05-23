@@ -17,10 +17,8 @@
   +----------------------------------------------------------------------+
  */
 
-#ifndef FORP_LOG_H
-#define FORP_LOG_H
-
-#define FORP_LOG_DEPTH    2
+#ifndef FORP_STRING_H
+#define FORP_STRING_H
 
 #include "php.h"
 
@@ -28,29 +26,19 @@
 #include "TSRM.h"
 #endif
 
-typedef struct forp_var_t {
-    char *type;
-    char *name;
-    char *key;
-    char *level;
-    char *value;
-    char *class;
-    struct forp_var_t **arr;
-    uint arr_len;
-    uint is_ref;
-    int refcount;
-    int stack_idx;
-} forp_var_t;
+char* forp_strndup(const char* s, size_t n);
 
-forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC);
+char *forp_substr_replace(char *subject, char *replace, unsigned int start, unsigned int len);
 
-zval *forp_find_symbol(zend_string *name TSRMLS_DC);
+char *forp_str_replace(char *search, char *replace, char *subject TSRMLS_DC);
 
-//void forp_inspect_symbol(char *name TSRMLS_DC);
+char *forp_addslashes(char *subject TSRMLS_DC);
 
-void forp_inspect_zval(char* name, zval *expr TSRMLS_DC);
+#if defined(PHP_WIN32)
+#define strndup(s,n) forp_strndup(s, n)
+#endif
 
-#endif  /* FORP_LOG_H */
+#endif  /* FORP_STRING_H */
 
 /*
  * Local variables:
