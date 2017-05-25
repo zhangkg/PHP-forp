@@ -220,10 +220,10 @@ void forp_inspect_symbol(zend_string *name TSRMLS_DC) {
 /* {{{ forp_inspect_zval
  */
 void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
-    forp_var_t *v;
+    forp_var_t *v = NULL;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = strdup(name);
+    v->name = "111"; // strdup(name);
     v->key = NULL;
 
     // if profiling started then attach the
