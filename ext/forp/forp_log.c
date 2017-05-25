@@ -42,7 +42,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     char         s[32];
     int          is_tmp;
     zval         *tmp;
-    zend_string  *key;
+    zend_string  *keyval;
     zend_ulong   idx;
     ulong        max_depth;
     HashTable    *ht;
@@ -108,7 +108,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             */
 finalize_ht:
             if (depth < max_depth + 1) {
-                ZEND_HASH_FOREACH_KEY_VAL(ht, idx, key, tmp) {
+                ZEND_HASH_FOREACH_KEY_VAL(ht, idx, keyval, tmp) {
 
                     arr = (forp_var_t **) malloc(sizeof(forp_var_t *)*(v->arr_len+1));
                     arr[v->arr_len] = (forp_var_t *) malloc(sizeof(forp_var_t));
@@ -116,15 +116,15 @@ finalize_ht:
                     arr[v->arr_len]->stack_idx = -1;
                     // v->arr = arr;
 
-                    php_printf("%s", ZSTR_VAL(key));
+                    php_printf("%s", ZSTR_VAL(keyval));
                     // php_printf("%s", ZSTR_VAL(key));
                     return v;
 
                     /*
-                    if (ZSTR_LEN(key) > 0) {
+                    if (ZSTR_LEN(keyval) > 0) {
                         if (strcmp(v->type, "object") == 0) {
                             size_t prop_name_len;
-                            zend_unmangle_property_name_ex(key, &class_name, &prop_name, &prop_name_len);
+                            zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_name_len);
 
                             if (class_name) {
                                 arr[v->arr_len]->type = strdup(class_name);
@@ -138,7 +138,7 @@ finalize_ht:
                             }
                             arr[v->arr_len]->key = strdup(prop_name);
                         } else {
-                            arr[v->arr_len]->key = strdup(ZSTR_VAL(key));
+                            arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
                         }
                     } else if (scanf("%lld", &idx)) {
                         sprintf(s, "%lu", idx);
@@ -223,7 +223,7 @@ void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
     forp_var_t *v;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = "111"; // strdup(name);
+    v->name = strdup(name);
     v->key = NULL;
 
     // if profiling started then attach the
