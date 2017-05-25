@@ -223,7 +223,7 @@ void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
     forp_var_t *v;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = strdup(name);
+    v->name = "111"; // strdup(name);
     v->key = NULL;
 
     // if profiling started then attach the
@@ -238,10 +238,8 @@ void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
     php_printf("%s\n", "brewk 1");
     return;
 
-    /*
     FORP_G(inspect) = (forp_var_t **) malloc(sizeof(forp_var_t *)*(FORP_G(inspect_len)+1));
     FORP_G(inspect)[FORP_G(inspect_len)] = v;
     FORP_G(inspect_len)++;
-    */
 }
 /* }}} */
