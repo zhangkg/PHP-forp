@@ -39,7 +39,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
 
     char         s[32];
     int          is_tmp;
-    zval         *tmp;
+    zval         *tmp, idxval;
     zend_string  *keyval;
     zend_ulong   idx;
     ulong        max_depth;
@@ -82,10 +82,8 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             */
             break;
         case IS_STRING :
-            /*
             v->type = "string";
             v->value = strdup(Z_STRVAL_P(expr));
-            */
             break;
         case IS_ARRAY :
             v->type = "array";
@@ -107,45 +105,41 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
 finalize_ht:
             if (depth < max_depth + 1) {
                 ZEND_HASH_FOREACH_KEY_VAL(ht, idx, keyval, tmp) {
+                    ZVAL_LONG(&idxval, idx);
 
-                    arr = (forp_var_t **) malloc(sizeof(forp_var_t *)*(v->arr_len+1));
-                    arr[v->arr_len] = (forp_var_t *) malloc(sizeof(forp_var_t));
-                    arr[v->arr_len]->name = NULL;
-                    arr[v->arr_len]->stack_idx = -1;
+                    v->arr = (forp_var_t **) malloc(sizeof(forp_var_t *)*(v->arr_len+1));
+                    v->arr[v->arr_len] = (forp_var_t *) malloc(sizeof(forp_var_t));
+                    v->arr[v->arr_len]->name = NULL;
+                    v->arr[v->arr_len]->stack_idx = -1;
                     // v->arr = arr;
 
-                    php_printf("%s", ZSTR_VAL(keyval));
-                    // php_printf("%s", ZSTR_VAL(key));
-                    return v;
-
-                    /*
                     if (ZSTR_LEN(keyval) > 0) {
                         if (strcmp(v->type, "object") == 0) {
                             size_t prop_name_len;
                             zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_name_len);
 
                             if (class_name) {
-                                arr[v->arr_len]->type = strdup(class_name);
+                                v->arr[v->arr_len]->type = strdup(class_name);
                                 if (class_name[0] == '*') {
-                                    arr[v->arr_len]->level = "protected";
+                                    v->arr[v->arr_len]->level = "protected";
                                 } else {
-                                    arr[v->arr_len]->level = "private";
+                                    v->arr[v->arr_len]->level = "private";
                                 }
                             } else {
-                                arr[v->arr_len]->level = "public";
+                                v->arr[v->arr_len]->level = "public";
                             }
-                            arr[v->arr_len]->key = strdup(prop_name);
+                            v->arr[v->arr_len]->key = strdup(prop_name);
                         } else {
-                            arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
+                            v->arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
                         }
-                    } else if (scanf("%lld", &idx)) {
+                    } else if (Z_TYPE_P(idxval) == IS_LONG) {
                         sprintf(s, "%lu", idx);
-                        arr[v->arr_len]->key = strdup(s);
+                        v->arr[v->arr_len]->key = strdup(s);
                     } else {
-                        arr[v->arr_len]->key = "*";
+                        v->arr[v->arr_len]->key = "*";
                     }
 
-                    forp_zval_var(arr[v->arr_len], tmp, depth + 1 TSRMLS_CC);
+                    forp_zval_var(v->arr[v->arr_len], tmp, depth + 1 TSRMLS_CC);
 
                     // php_printf(
                     //        "%*s > %s\n", depth, "",
@@ -153,7 +147,6 @@ finalize_ht:
                     //        );
 
                     v->arr_len++;
-                    */
 
                 } ZEND_HASH_FOREACH_END();
             }
@@ -179,7 +172,7 @@ finalize_ht:
 
 /* {{{ forp_find_symbol
  */
-/*
+ /*
 zval *forp_find_symbol(zend_string *name TSRMLS_DC) {
     HashTable *symbols = NULL;
     zval *val;
@@ -221,20 +214,18 @@ void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
     forp_var_t *v = NULL;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = "111"; // strdup(name);
+    v->name = strdup(name);
     v->key = NULL;
 
     // if profiling started then attach the
     // current node index
-    if(FORP_G(current_node)) {
+    if (FORP_G(current_node)) {
         v->stack_idx = FORP_G(current_node)->key;
     } else {
         v->stack_idx = -1;
     }
 
     forp_zval_var(v, expr, 1 TSRMLS_CC);
-    php_printf("%s\n", "brewk 1");
-    return;
 
     FORP_G(inspect) = (forp_var_t **) malloc(sizeof(forp_var_t *)*(FORP_G(inspect_len)+1));
     FORP_G(inspect)[FORP_G(inspect_len)] = v;
