@@ -28,8 +28,6 @@
 #include "php_forp.h"
 
 #include "forp_log.h"
-#include "Zend/zend_string.h"
-#include "ext/standard/php_var.h"
 
 #ifdef ZTS
 #include "TSRM.h"
