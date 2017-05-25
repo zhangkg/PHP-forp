@@ -64,8 +64,8 @@ static void forp_populate_function(
                 function->class = strdup(ZSTR_VAL(edata->func->common.scope->name));
             }
         } else if (
-                EG(scope)
-                && edata->func->common.scope
+                // EG(scope) &&
+                edata->func->common.scope
                 && edata->func->common.scope->name
                 ) {
             function->class = strdup(ZSTR_VAL(edata->func->common.scope->name));
@@ -629,7 +629,7 @@ void forp_stack_dump(TSRMLS_D) {
             if (n->parent)
                 add_assoc_long(&entry, FORP_DUMP_ASSOC_PARENT, n->parent->key);
 
-            _zend_hash_next_index_insert(Z_ARRVAL(stack), (void *) &entry);
+            zend_hash_next_index_insert(Z_ARRVAL(stack), (void *) &entry);
         }
     }
 

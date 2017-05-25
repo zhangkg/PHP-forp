@@ -108,7 +108,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             */
 finalize_ht:
             if (depth < max_depth + 1) {
-                ZEND_HASH_FOREACH_STR_KEY_VAL(ht, key, tmp) {
+                ZEND_HASH_FOREACH_KEY_VAL(ht, idx, key, tmp) {
 
                     arr = (forp_var_t **) malloc(sizeof(forp_var_t *)*(v->arr_len+1));
                     arr[v->arr_len] = (forp_var_t *) malloc(sizeof(forp_var_t));
@@ -120,6 +120,7 @@ finalize_ht:
                     // php_printf("%s", ZSTR_VAL(key));
                     return v;
 
+                    /*
                     if (ZSTR_LEN(key) > 0) {
                         if (strcmp(v->type, "object") == 0) {
                             size_t prop_name_len;
@@ -154,6 +155,7 @@ finalize_ht:
                     //        );
 
                     v->arr_len++;
+                    */
 
                 } ZEND_HASH_FOREACH_END();
             }
@@ -179,6 +181,7 @@ finalize_ht:
 
 /* {{{ forp_find_symbol
  */
+/*
 zval *forp_find_symbol(zend_string *name TSRMLS_DC) {
     HashTable *symbols = NULL;
     zval *val;
@@ -191,6 +194,7 @@ zval *forp_find_symbol(zend_string *name TSRMLS_DC) {
 
     return NULL;
 }
+*/
 /* }}} */
 
 /* {{{ forp_inspect_symbol
@@ -230,12 +234,14 @@ void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
         v->stack_idx = -1;
     }
 
-    // forp_zval_var(v, expr, 1 TSRMLS_CC);
-    // php_printf("%s\n", "brewk 1");
-    // return;
+    forp_zval_var(v, expr, 1 TSRMLS_CC);
+    php_printf("%s\n", "brewk 1");
+    return;
 
+    /*
     FORP_G(inspect) = (forp_var_t **) malloc(sizeof(forp_var_t *)*(FORP_G(inspect_len)+1));
     FORP_G(inspect)[FORP_G(inspect_len)] = v;
     FORP_G(inspect_len)++;
+    */
 }
 /* }}} */

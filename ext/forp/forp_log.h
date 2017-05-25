@@ -44,9 +44,9 @@ typedef struct forp_var_t {
 
 forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC);
 
-zval *forp_find_symbol(zend_string *name TSRMLS_DC);
+// zval *forp_find_symbol(zend_string *name TSRMLS_DC);
 
-//void forp_inspect_symbol(char *name TSRMLS_DC);
+void forp_inspect_symbol(char *name TSRMLS_DC);
 
 void forp_inspect_zval(char* name, zval *expr TSRMLS_DC);
 
