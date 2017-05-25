@@ -132,7 +132,7 @@ finalize_ht:
                         } else {
                             v->arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
                         }
-                    } else if (Z_TYPE_P(idxval) == IS_LONG) {
+                    } else if (Z_TYPE(idxval) == IS_LONG) {
                         sprintf(s, "%lu", idx);
                         v->arr[v->arr_len]->key = strdup(s);
                     } else {
@@ -210,11 +210,11 @@ void forp_inspect_symbol(zend_string *name TSRMLS_DC) {
 
 /* {{{ forp_inspect_zval
  */
-void forp_inspect_zval(char* name, zval *expr TSRMLS_DC) {
+void forp_inspect_zval(char *name, zval *expr TSRMLS_DC) {
     forp_var_t *v = NULL;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = strdup(name);
+    v->name = "unknown"; // strdup(name);
     v->key = NULL;
 
     // if profiling started then attach the
