@@ -70,8 +70,8 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             v->value = strdup(s);
             v->type = "int";
             break;
-        case IS_FALSE :
-        case IS_TRUE :
+        case IS_FALSE:
+        case IS_TRUE:
             v->value = IS_TRUE ? "true" : "false";
             v->type = "bool";
             break;
@@ -101,8 +101,8 @@ finalize_ht:
                 ZEND_HASH_FOREACH_KEY_VAL(ht, idx, keyval, tmp) {
                     ZVAL_LONG(&idxval, idx);
 
-                    v->arr = (forp_var_t **) malloc(sizeof(forp_var_t *)*(v->arr_len+1));
-                    v->arr[v->arr_len] = (forp_var_t *) malloc(sizeof(forp_var_t));
+                    v->arr = realloc(v->arr, (v->arr_len+1) * sizeof(forp_var_t));
+                    v->arr[v->arr_len] = malloc(sizeof(forp_var_t));
                     v->arr[v->arr_len]->name = NULL;
                     v->arr[v->arr_len]->stack_idx = -1;
                     // v->arr = arr;
@@ -221,7 +221,7 @@ void forp_inspect_zval(char *name, zval *expr TSRMLS_DC) {
 
     forp_zval_var(v, expr, 1 TSRMLS_CC);
 
-    FORP_G(inspect) = (forp_var_t **) malloc(sizeof(forp_var_t *)*(FORP_G(inspect_len)+1));
+    FORP_G(inspect) = realloc(FORP_G(inspect), (FORP_G(inspect_len)+1) * sizeof(forp_var_t));
     FORP_G(inspect)[FORP_G(inspect_len)] = v;
     FORP_G(inspect_len)++;
 }
