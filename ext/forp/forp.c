@@ -516,10 +516,10 @@ void forp_execute_internal(zend_execute_data *execute_data, zval *ret)
 
 /* {{{ forp_stack_dump_var
  */
-zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
+static zval *forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
 
     int i;
-    zval zvar, zarr, entry;
+    zval zvar, zarr, *entry, *ret;
 
     array_init(&zvar);
 
@@ -539,7 +539,7 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
         i = 0;
         while(i < var->arr_len) {
             entry = forp_stack_dump_var(var->arr[i] TSRMLS_CC);
-            add_assoc_zval(&zarr, var->arr[i]->key, &entry);
+            add_assoc_zval(&zarr, var->arr[i]->key, entry);
             i++;
         }
         if(strcmp(var->type, "object") == 0) add_assoc_zval(&zvar, "properties", &zarr);
@@ -549,7 +549,9 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
         if(var->value) add_assoc_string(&zvar, "value", var->value);
     }
 
-    return zvar;
+    ret = (zval *) &zvar
+
+    return ret;
 }
 /* }}} */
 
@@ -558,7 +560,7 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
 void forp_stack_dump(TSRMLS_D) {
     int i;
     int j = 0;
-    zval entry, stack, groups, time, profiler_duration, inspect, var;
+    zval entry, stack, groups, time, profiler_duration, inspect, *var;
     forp_node_t *n;
 
     array_init(&FORP_G(dump));
@@ -640,7 +642,7 @@ void forp_stack_dump(TSRMLS_D) {
 
         for (i = 0; i < FORP_G(inspect_len); ++i) {
             var = forp_stack_dump_var(FORP_G(inspect)[i] TSRMLS_CC);
-            add_assoc_zval(&inspect, FORP_G(inspect)[i]->name, &var);
+            add_assoc_zval(&inspect, FORP_G(inspect)[i]->name, var);
         }
     }
 }
