@@ -640,7 +640,7 @@ void forp_stack_dump(TSRMLS_D) {
 
         for (i = 0; i < FORP_G(inspect_len); ++i) {
             var = forp_stack_dump_var(FORP_G(inspect)[i] TSRMLS_CC);
-            add_assoc_zval(&inspect, FORP_G(inspect)[i]->name, var);
+            add_assoc_zval(&inspect, FORP_G(inspect)[i]->name, &var);
         }
     }
 }
