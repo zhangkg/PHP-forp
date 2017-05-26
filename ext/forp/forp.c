@@ -539,7 +539,7 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
         i = 0;
         while(i < var->arr_len) {
             entry = forp_stack_dump_var(var->arr[i] TSRMLS_CC);
-            add_assoc_zval(&zarr, var->arr[i]->key, entry);
+            add_assoc_zval(&zarr, var->arr[i]->key, &entry);
             i++;
         }
         if(strcmp(var->type, "object") == 0) add_assoc_zval(&zvar, "properties", &zarr);
