@@ -61,25 +61,19 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
 
     switch(Z_TYPE_P(expr)) {
         case IS_DOUBLE :
-            /*
             sprintf(s, "%f", Z_DVAL_P(expr));
             v->value = strdup(s);
             v->type = "float";
-            */
             break;
         case IS_LONG :
-            /*
             sprintf(s, "%ld", Z_LVAL_P(expr));
             v->value = strdup(s);
             v->type = "int";
-            */
             break;
-        case IS_FALSE:
-        case IS_TRUE:
-            /*
+        case IS_FALSE :
+        case IS_TRUE :
             v->value = IS_TRUE ? "true" : "false";
             v->type = "bool";
-            */
             break;
         case IS_STRING :
             v->type = "string";

@@ -516,10 +516,10 @@ void forp_execute_internal(zend_execute_data *execute_data, zval *ret)
 
 /* {{{ forp_stack_dump_var
  */
-static zval *forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
+zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
 
     int i;
-    zval zvar, zarr, *entry, *ret;
+    zval zvar, zarr, entry;
 
     array_init(&zvar);
 
@@ -549,9 +549,7 @@ static zval *forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
         if(var->value) add_assoc_string(&zvar, "value", var->value);
     }
 
-    ret = (zval *) &zvar
-
-    return ret;
+    return zvar;
 }
 /* }}} */
 

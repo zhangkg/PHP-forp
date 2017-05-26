@@ -107,7 +107,7 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
 
 void forp_close_node(forp_node_t *pn TSRMLS_DC);
 
-zval *forp_stack_dump_var(forp_var_t *var TSRMLS_DC);
+zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC);
 
 void forp_stack_dump(TSRMLS_D);
 
