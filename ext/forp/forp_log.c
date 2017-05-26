@@ -49,7 +49,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     forp_var_t   **arr;
 
 
-    v->level   = NULL;
+    v->level   = "unknown";
     v->value   = NULL;
     v->class   = NULL;
     v->arr     = NULL;
@@ -92,7 +92,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             max_depth = FORP_G(inspect_depth_array);
             goto finalize_ht;
         case IS_OBJECT :
-            /*
+
             v->type = "object";
             v->class = strdup(ZSTR_VAL(Z_OBJCE_P(expr)->name));
             sprintf(s, "#%d", Z_OBJ_HANDLE_P(expr));
@@ -101,7 +101,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             ht = Z_OBJDEBUG_P(expr, is_tmp);
             max_depth = FORP_G(inspect_depth_object);
             goto finalize_ht;
-            */
+
 finalize_ht:
             if (depth < max_depth + 1) {
                 ZEND_HASH_FOREACH_KEY_VAL(ht, idx, keyval, tmp) {
@@ -113,7 +113,7 @@ finalize_ht:
                     v->arr[v->arr_len]->stack_idx = -1;
                     // v->arr = arr;
 
-                    if (ZSTR_LEN(keyval) > 0) {
+                    if (ZSTR_VAL(keyval)) {
                         if (strcmp(v->type, "object") == 0) {
                             size_t prop_name_len;
                             zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_name_len);
@@ -130,7 +130,7 @@ finalize_ht:
                             }
                             v->arr[v->arr_len]->key = strdup(prop_name);
                         } else {
-                            v->arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
+                            v->arr[v->arr_len]->key = ZSTR_VAL(keyval);
                         }
                     } else if (Z_TYPE(idxval) == IS_LONG) {
                         sprintf(s, "%lu", idx);
@@ -214,7 +214,7 @@ void forp_inspect_zval(char *name, zval *expr TSRMLS_DC) {
     forp_var_t *v = NULL;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = "unknown"; // strdup(name);
+    v->name = name;
     v->key = NULL;
 
     // if profiling started then attach the
