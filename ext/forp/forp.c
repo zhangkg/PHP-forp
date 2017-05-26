@@ -558,7 +558,7 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
 void forp_stack_dump(TSRMLS_D) {
     int i;
     int j = 0;
-    zval entry, stack, groups, time, profiler_duration, inspect, *var;
+    zval entry, stack, groups, time, profiler_duration, inspect, var;
     forp_node_t *n;
 
     array_init(&FORP_G(dump));
