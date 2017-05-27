@@ -214,7 +214,7 @@ void forp_json_inspect(forp_var_t *var TSRMLS_DC) {
 
 /* {{{ forp_json_google_tracer
  */
-void forp_json_google_tracer(char *filepath TSRMLS_DC) {
+void forp_json_google_tracer(const char *filepath TSRMLS_DC) {
     FILE *fp;
 
     int i, j;

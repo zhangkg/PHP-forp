@@ -321,7 +321,7 @@ ZEND_FUNCTION(forp_json) {
 }
 
 ZEND_FUNCTION(forp_json_google_tracer) {
-    char* filepath = NULL;
+    const char* filepath;
     int filepath_len;
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filepath, &filepath_len) == FAILURE) {
         return;
