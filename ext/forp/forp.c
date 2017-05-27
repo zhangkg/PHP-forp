@@ -26,6 +26,7 @@
 
 #include "forp.h"
 #include "php_forp.h"
+#include "forp_log.h"
 
 #include "forp_string.h"
 #include "forp_annotation.h"
