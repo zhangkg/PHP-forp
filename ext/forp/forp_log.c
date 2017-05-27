@@ -49,7 +49,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     forp_var_t   **arr;
 
 
-    v->level   = "unknown";
+    v->level   = NULL;
     v->value   = NULL;
     v->class   = NULL;
     v->arr     = NULL;
@@ -146,13 +146,11 @@ finalize_ht:
             }
             break;
         case IS_RESOURCE :
-            /*
             v->type = "resource";
             resource_type = zend_rsrc_list_get_rsrc_type(Z_RES_P(expr) TSRMLS_CC);
             if (resource_type) {
                 v->value = strdup(resource_type);
             }
-            */
             break;
         case IS_NULL :
             v->type = "null";
