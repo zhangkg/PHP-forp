@@ -45,7 +45,6 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     ulong        max_depth;
     HashTable    *ht;
     const char   *resource_type;
-    const char   *class_name, *prop_name;
     forp_var_t   **arr;
 
 
@@ -107,11 +106,11 @@ finalize_ht:
                     v->arr[v->arr_len]->stack_idx = -1;
                     // v->arr = arr;
 
-                    if (ZSTR_VAL(keyval)) {
+                    if (keyval) {
                         if (strcmp(v->type, "object") == 0) {
-                            size_t prop_name_len;
-                            zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_name_len);
-
+                            const char *class_name, *prop_name;
+                            size_t prop_len;
+                            zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_len);
                             if (class_name) {
                                 v->arr[v->arr_len]->type = strdup(class_name);
                                 if (class_name[0] == '*') {
@@ -124,21 +123,17 @@ finalize_ht:
                             }
                             v->arr[v->arr_len]->key = strdup(prop_name);
                         } else {
-                            v->arr[v->arr_len]->key = ZSTR_VAL(keyval);
+                            v->arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
                         }
                     } else if (Z_TYPE(idxval) == IS_LONG) {
-                        sprintf(s, "%lu", idx);
+                        sprintf(s, "%ld", Z_LVAL(idxval));
                         v->arr[v->arr_len]->key = strdup(s);
+                        ZVAL_NULL(&idxval);
                     } else {
                         v->arr[v->arr_len]->key = "*";
                     }
 
                     forp_zval_var(v->arr[v->arr_len], tmp, depth + 1 TSRMLS_CC);
-
-                    // php_printf(
-                    //        "%*s > %s\n", depth, "",
-                    //        v->arr[v->arr_len]->key
-                    //        );
 
                     v->arr_len++;
 

@@ -303,15 +303,14 @@ ZEND_FUNCTION(forp_print) {
 }
 
 ZEND_FUNCTION(forp_inspect) {
-    char *name;
-    int name_len;
     zval *expr;
+    zend_string *name;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sz", &name, &name_len, &expr) == FAILURE) {
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Sz", &name, &expr) == FAILURE) {
         return;
     }
 
-    forp_inspect_zval(name, expr TSRMLS_CC);
+    forp_inspect_zval(ZSTR_VAL(name), expr TSRMLS_CC);
 
     RETURN_TRUE;
 }
