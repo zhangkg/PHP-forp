@@ -320,13 +320,13 @@ ZEND_FUNCTION(forp_json) {
 }
 
 ZEND_FUNCTION(forp_json_google_tracer) {
-    const char* filepath = NULL;
-    int filepath_len;
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filepath, &filepath_len) == FAILURE) {
+    zend_string *file_path;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "S", &file_path) == FAILURE) {
         return;
     }
-    if (strlen(filepath) != filepath_len) {
+    if (ZSTR_LEN(file_path) != strlen(ZSTR_VAL(file_path))) {
         return;
     }
-    forp_json_google_tracer(filepath TSRMLS_CC);
+    forp_json_google_tracer(ZSTR_VAL(file_path) TSRMLS_CC);
 }
