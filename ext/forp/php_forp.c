@@ -310,7 +310,7 @@ ZEND_FUNCTION(forp_inspect) {
         return;
     }
 
-    forp_inspect_zval(ZSTR_VAL(name), expr TSRMLS_CC);
+    forp_inspect_zval(name, expr TSRMLS_CC);
 
     RETURN_TRUE;
 }

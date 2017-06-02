@@ -28,6 +28,7 @@
 #include "php_forp.h"
 
 #include "forp_log.h"
+#include "ext/standard/php_var.h"
 
 #ifdef ZTS
 #include "TSRM.h"
@@ -40,7 +41,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     char         s[32];
     int          is_tmp;
     zval         *tmp, idxval;
-    zend_string  *keyval;
+    zend_string  *str_key;
     zend_ulong   idx;
     ulong        max_depth;
     HashTable    *ht;
@@ -57,7 +58,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
 
 
     v->is_ref = Z_ISREF_P(expr);
-    v->refcount = 0;
+    if(Z_REFCOUNTED_P(expr)) v->refcount = Z_REFCOUNT_P(expr);
 
     switch(Z_TYPE_P(expr)) {
         case IS_DOUBLE:
@@ -77,7 +78,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             break;
         case IS_STRING:
             v->type = "string";
-            v->value = Z_STRVAL_P(expr);
+            v->value = strdup(Z_STRVAL_P(expr));
             break;
         case IS_ARRAY:
             v->type = "array";
@@ -98,18 +99,24 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
 
 finalize_ht:
             if (depth < max_depth + 1) {
-                ZEND_HASH_FOREACH_KEY_VAL(ht, idx, keyval, tmp) {
-                    ZVAL_LONG(&idxval, idx);
+                ZEND_HASH_FOREACH_KEY_VAL(ht, idx, str_key, tmp) {
+                    if (Z_TYPE_P(tmp) == IS_INDIRECT) {
+                        tmp = Z_INDIRECT_P(tmp);
+                        if (Z_TYPE_P(tmp) == IS_UNDEF) {
+                            continue;
+                        }
+                    }
 
+                    ZVAL_LONG(&idxval, idx);
                     v->arr = realloc(v->arr, (v->arr_len+1) * sizeof(forp_var_t));
                     v->arr[v->arr_len] = malloc(sizeof(forp_var_t));
                     v->arr[v->arr_len]->name = NULL;
                     v->arr[v->arr_len]->stack_idx = -1;
                     // v->arr = arr;
 
-                    if (keyval) {
+                    if (str_key) {
                         if (strcmp(v->type, "object") == 0) {
-                            int mangled = zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_len);
+                            int mangled = zend_unmangle_property_name_ex(str_key, &class_name, &prop_name, &prop_len);
                             if (class_name && mangled == SUCCESS) {
                                 v->arr[v->arr_len]->type = strdup(class_name);
                                 if (class_name[0] == '*') {
@@ -122,19 +129,21 @@ finalize_ht:
                             }
                             v->arr[v->arr_len]->key = strdup(prop_name);
                         } else {
-                            v->arr[v->arr_len]->key = strdup(ZSTR_VAL(keyval));
+                            v->arr[v->arr_len]->key = strdup(ZSTR_VAL(str_key));
                         }
-                    } else if (Z_TYPE(idxval) == IS_LONG) {
-                        sprintf(s, "%ld", Z_LVAL(idxval));
-                        v->arr[v->arr_len]->key = strdup(s);
-                        ZVAL_NULL(&idxval);
                     } else {
-                        v->arr[v->arr_len]->key = "*";
+                        if (Z_TYPE(idxval) == IS_LONG) {
+                            sprintf(s, "%ld", Z_LVAL(idxval));
+                            v->arr[v->arr_len]->key = strdup(s);
+                            zval_ptr_dtor(&idxval);
+                        } else {
+                            v->arr[v->arr_len]->key = "*";
+                        }
                     }
 
                     forp_zval_var(v->arr[v->arr_len], tmp, depth + 1 TSRMLS_CC);
-
                     v->arr_len++;
+
 
                 } ZEND_HASH_FOREACH_END();
             }
@@ -196,11 +205,11 @@ void forp_inspect_symbol(zend_string *name TSRMLS_DC) {
 
 /* {{{ forp_inspect_zval
  */
-void forp_inspect_zval(char *name, zval *expr TSRMLS_DC) {
+void forp_inspect_zval(zend_string *name, zval *expr TSRMLS_DC) {
     forp_var_t *v = NULL;
 
     v = malloc(sizeof(forp_var_t));
-    v->name = name;
+    v->name = ZSTR_VAL(name);
     v->key = NULL;
 
     // if profiling started then attach the

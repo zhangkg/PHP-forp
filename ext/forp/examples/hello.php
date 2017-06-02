@@ -1,9 +1,10 @@
 <?php
 
-$foo = new stdClass;
-$foo->foo = 'foo';
-$foo->bar = 'bar';
+class Foo {
+  public $foo = 'foo';
+	public $bar = 'bar';
+}
 
-$var = array(0 => "my", "strkey" => "inspected", 3 => $foo);
+$var = array("one" => "my", "strkey" => "inspected", "three" => new Foo());
 forp_inspect('var', $var);
 print_r(forp_dump());

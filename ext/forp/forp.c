@@ -30,6 +30,7 @@
 
 #include "forp_string.h"
 #include "forp_annotation.h"
+#include "ext/standard/php_var.h"
 
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -524,30 +525,28 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
 
     array_init(&zvar);
 
-    if(var->level) add_assoc_string(&zvar, "level", var->level);
-    if(var->type) add_assoc_string(&zvar, "type", var->type);
-    if(var->is_ref) {
+    if (var->level) add_assoc_string(&zvar, "level", var->level);
+    if (var->type) add_assoc_string(&zvar, "type", var->type);
+    if (var->is_ref) {
         add_assoc_long(&zvar, "is_ref", var->is_ref);
         if(var->refcount > 1) add_assoc_long(&zvar, "refcount", var->refcount);
     }
-    if(var->stack_idx > -1) add_assoc_long(&zvar, "stack_idx", var->stack_idx);
-    if(var->class) add_assoc_string(&zvar, "class", var->class);
-    if(var->arr_len) {
+    if (var->stack_idx > -1) add_assoc_long(&zvar, "stack_idx", var->stack_idx);
+    if (var->class) add_assoc_string(&zvar, "class", var->class);
+    if (var->arr_len > 0) {
         add_assoc_long(&zvar, "size", var->arr_len);
 
         array_init(&zarr);
 
         i = 0;
-        while(i < var->arr_len) {
+        while (i < var->arr_len) {
             entry = forp_stack_dump_var(var->arr[i] TSRMLS_CC);
             add_assoc_zval(&zarr, var->arr[i]->key, &entry);
             i++;
         }
-        if(strcmp(var->type, "object") == 0) {
-            add_assoc_zval(&zvar, "properties", &zarr);
-        } else {
-            add_assoc_zval(&zvar, "value", &zarr);
-        }
+        if(strcmp(var->type, "object") == 0) add_assoc_zval(&zvar, "properties", &zarr);
+        else add_assoc_zval(&zvar, "value", &zarr);
+
     } else {
         if(var->value) add_assoc_string(&zvar, "value", var->value);
     }
@@ -632,7 +631,7 @@ void forp_stack_dump(TSRMLS_D) {
             if (n->parent)
                 add_assoc_long(&entry, FORP_DUMP_ASSOC_PARENT, n->parent->key);
 
-            zend_hash_next_index_insert(Z_ARRVAL(stack), (void *) &entry);
+            zend_hash_next_index_insert(Z_ARRVAL(stack), (zval *) &entry);
         }
     }
 
