@@ -2,9 +2,9 @@
 
 class foo {
 
-		public $one;
-		public $two;
-		public $three;
+		public $one = 'f';
+		private $two = 'o';
+		protected $three = 'o';
 		
 		function __construct() {
 				echo "hello";		

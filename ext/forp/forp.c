@@ -30,6 +30,7 @@
 
 #include "forp_string.h"
 #include "forp_annotation.h"
+#include "ext/standard/php_var.h"
 
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -539,11 +540,9 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
 
         i = 0;
         while(i < var->arr_len) {
-            if (var->arr[i]->key) {
-                entry = forp_stack_dump_var(var->arr[i] TSRMLS_CC);
-                add_assoc_zval(&zarr, var->arr[i]->key, &entry);
-                i++;
-            }
+            entry = forp_stack_dump_var(var->arr[i] TSRMLS_CC);
+            add_assoc_zval(&zarr, var->arr[i]->key, &entry);
+            i++;
         }
         if(strcmp(var->type, "object") == 0) add_assoc_zval(&zvar, "properties", &zarr);
         else add_assoc_zval(&zvar, "value", &zarr);
@@ -642,10 +641,8 @@ void forp_stack_dump(TSRMLS_D) {
         add_assoc_zval(&FORP_G(dump), "inspect", &inspect);
 
         for (i = 0; i < FORP_G(inspect_len); ++i) {
-            if (FORP_G(inspect)[i]->name) {
-                var = forp_stack_dump_var(FORP_G(inspect)[i] TSRMLS_CC);
-                add_assoc_zval(&inspect, FORP_G(inspect)[i]->name, &var);
-            }
+            var = forp_stack_dump_var(FORP_G(inspect)[i] TSRMLS_CC);
+            add_assoc_zval(&inspect, FORP_G(inspect)[i]->name, &var);
         }
     }
 }

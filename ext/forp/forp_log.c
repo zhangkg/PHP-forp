@@ -45,7 +45,6 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     ulong        max_depth;
     HashTable    *ht;
     const char   *resource_type;
-    const char   *class_name, *prop_name;
 
 
     v->level   = NULL;
@@ -56,7 +55,7 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
 
 
     v->is_ref = Z_ISREF_P(expr);
-    if(Z_REFCOUNT_P(expr)>1) v->refcount = Z_REFCOUNT_P(expr);
+    v->refcount = 0;
 
     switch(Z_TYPE_P(expr)) {
         case IS_DOUBLE :
@@ -108,9 +107,10 @@ finalize_ht:
 
                     if (keyval) {
                         if (strcmp(v->type, "object") == 0) {
+                            const char *class_name, *prop_name;
                             size_t prop_len;
                             int mangled = zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_len);
-                            if (class_name) {
+                            if (class_name && mangled == SUCCESS) {
                                 v->arr[v->arr_len]->type = strdup(class_name);
                                 if (class_name[0] == '*') {
                                     v->arr[v->arr_len]->level = "protected";
@@ -211,7 +211,7 @@ void forp_inspect_zval(char *name, zval *expr TSRMLS_DC) {
         v->stack_idx = -1;
     }
 
-    forp_zval_var(v, expr, 2 TSRMLS_CC);
+    forp_zval_var(v, expr, 1 TSRMLS_CC);
 
     FORP_G(inspect) = realloc(FORP_G(inspect), (FORP_G(inspect_len)+1) * sizeof(forp_var_t));
     FORP_G(inspect)[FORP_G(inspect_len)] = v;
