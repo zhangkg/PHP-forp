@@ -45,6 +45,8 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     ulong        max_depth;
     HashTable    *ht;
     const char   *resource_type;
+    const char   *class_name, *prop_name;
+    size_t       prop_len;
 
 
     v->level   = NULL;
@@ -58,12 +60,12 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
     v->refcount = 0;
 
     switch(Z_TYPE_P(expr)) {
-        case IS_DOUBLE :
+        case IS_DOUBLE:
             sprintf(s, "%f", Z_DVAL_P(expr));
             v->value = strdup(s);
             v->type = "float";
             break;
-        case IS_LONG :
+        case IS_LONG:
             sprintf(s, "%ld", Z_LVAL_P(expr));
             v->value = strdup(s);
             v->type = "int";
@@ -73,17 +75,17 @@ forp_var_t *forp_zval_var(forp_var_t *v, zval *expr, int depth TSRMLS_DC) {
             v->value = IS_TRUE ? "true" : "false";
             v->type = "bool";
             break;
-        case IS_STRING :
+        case IS_STRING:
             v->type = "string";
-            v->value = strdup(Z_STRVAL_P(expr));
+            v->value = Z_STRVAL_P(expr);
             break;
-        case IS_ARRAY :
+        case IS_ARRAY:
             v->type = "array";
 
             ht = Z_ARRVAL_P(expr);
             max_depth = FORP_G(inspect_depth_array);
             goto finalize_ht;
-        case IS_OBJECT :
+        case IS_OBJECT:
 
             v->type = "object";
             v->class = strdup(ZSTR_VAL(Z_OBJCE_P(expr)->name));
@@ -107,8 +109,6 @@ finalize_ht:
 
                     if (keyval) {
                         if (strcmp(v->type, "object") == 0) {
-                            const char *class_name, *prop_name;
-                            size_t prop_len;
                             int mangled = zend_unmangle_property_name_ex(keyval, &class_name, &prop_name, &prop_len);
                             if (class_name && mangled == SUCCESS) {
                                 v->arr[v->arr_len]->type = strdup(class_name);
@@ -139,14 +139,14 @@ finalize_ht:
                 } ZEND_HASH_FOREACH_END();
             }
             break;
-        case IS_RESOURCE :
+        case IS_RESOURCE:
             v->type = "resource";
             resource_type = zend_rsrc_list_get_rsrc_type(Z_RES_P(expr) TSRMLS_CC);
             if (resource_type) {
                 v->value = strdup(resource_type);
             }
             break;
-        case IS_NULL :
+        case IS_NULL:
             v->type = "null";
             break;
     }

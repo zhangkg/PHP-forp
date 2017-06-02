@@ -30,7 +30,6 @@
 
 #include "forp_string.h"
 #include "forp_annotation.h"
-#include "ext/standard/php_var.h"
 
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -544,9 +543,11 @@ zval forp_stack_dump_var(forp_var_t *var TSRMLS_DC) {
             add_assoc_zval(&zarr, var->arr[i]->key, &entry);
             i++;
         }
-        if(strcmp(var->type, "object") == 0) add_assoc_zval(&zvar, "properties", &zarr);
-        else add_assoc_zval(&zvar, "value", &zarr);
-
+        if(strcmp(var->type, "object") == 0) {
+            add_assoc_zval(&zvar, "properties", &zarr);
+        } else {
+            add_assoc_zval(&zvar, "value", &zarr);
+        }
     } else {
         if(var->value) add_assoc_string(&zvar, "value", var->value);
     }
