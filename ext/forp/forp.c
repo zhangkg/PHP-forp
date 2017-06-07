@@ -479,12 +479,13 @@ void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
 }
 /* }}} */
 
+
 /* {{{ forp_execute_internal
  */
 #if PHP_VERSION_ID < 50500
 void forp_execute_internal(zend_execute_data *current_execute_data, int ret TSRMLS_DC)
 #else
-void forp_execute_internal(zend_execute_data *execute_data, zval *ret)
+void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC)
 #endif
 {
     forp_node_t *n;
@@ -493,7 +494,7 @@ void forp_execute_internal(zend_execute_data *execute_data, zval *ret)
 #if PHP_VERSION_ID < 50500
         execute_internal(current_execute_data, ret TSRMLS_CC);
 #else
-        execute_internal(execute_data, ret TSRMLS_CC);
+        execute_internal(current_execute_data, return_value TSRMLS_CC);
 #endif
     } else {
         n = forp_open_node(EG(current_execute_data), NULL TSRMLS_CC);
@@ -501,13 +502,13 @@ void forp_execute_internal(zend_execute_data *execute_data, zval *ret)
 #if PHP_VERSION_ID < 50500
             old_execute_internal(current_execute_data, ret TSRMLS_CC);
 #else
-            old_execute_internal(execute_data, ret TSRMLS_CC);
+            old_execute_internal(current_execute_data, return_value TSRMLS_CC);
 #endif
         } else {
 #if PHP_VERSION_ID < 50500
             execute_internal(current_execute_data, ret TSRMLS_CC);
 #else
-            execute_internal(execute_data, ret TSRMLS_CC);
+            execute_internal(current_execute_data, return_value TSRMLS_CC);
 #endif
         }
         if(n && n->state < 2) forp_close_node(n TSRMLS_CC);
@@ -647,6 +648,7 @@ void forp_stack_dump(TSRMLS_D) {
 }
 /* }}} */
 
+
 /* {{{ forp_stack_dump_cli_node
  */
 void forp_stack_dump_cli_node(forp_node_t *n TSRMLS_DC) {
@@ -737,4 +739,3 @@ int forp_is_profiling_function(forp_node_t *n TSRMLS_DC) {
         || strstr(n->function.function, "forp_json_google_tracer")
     );
 }
-/* }}} */
