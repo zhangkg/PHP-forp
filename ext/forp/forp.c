@@ -128,9 +128,9 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
     n = malloc(sizeof (forp_node_t));
 
     // getting function infos
-    if(edata) {
+    if (edata) {
         forp_populate_function(&(n->function), edata, op_array TSRMLS_CC);
-        if(forp_is_profiling_function(n TSRMLS_CC)) {
+        if (forp_is_profiling_function(n TSRMLS_CC)) {
             free(n);
             return NULL;
         }
@@ -185,7 +185,7 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
         }
     }
 
-    if(edata) {
+    if (edata) {
 
         // Retrieves filename
         if(FORP_G(current_node) && FORP_G(current_node)->function.filename) {
@@ -202,9 +202,9 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
 
 #if PHP_VERSION_ID >= 50500
         /*
-            if(zend_vm_stack_get_args_count(TSRMLS_C) > 0) {
+            if (ZEND_CALL_NUM_ARGS(edata) > 0) {
                 char c[4];
-                zval **arg;
+                zval *arg;
                 const char *nums = "123456789";
                 char *result = NULL;
                 char delims[] = "#";
@@ -214,12 +214,12 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
                 while( result != NULL ) {
                     if (strchr(nums, result[0])) {
                         to = strndup(result, 1);
-                        arg = zend_vm_stack_get_arg(atoi(to) TSRMLS_CC);
+                        arg = ZEND_CALL_ARG(edata, edata->func->op_array.num_args);
                         sprintf(c, "#%d", atoi(to));
-                        switch(Z_TYPE_PP(arg)) {
-                            case IS_DOUBLE: case IS_LONG: case IS_BOOL:
-                            case IS_NULL: case IS_STRING:
-                                convert_to_string(*arg);
+                        switch(Z_TYPE_P(arg)) {
+                            case IS_DOUBLE: case IS_LONG: case IS_TRUE:
+                            case IS_FALSE: case IS_NULL: case IS_STRING:
+                                convert_to_string(arg);
                                 val = Z_STRVAL_P(arg);
                                 break;
                             case IS_RESOURCE:
@@ -296,9 +296,8 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
         n->function.class = NULL;
         n->function.function = "{main}";
 
-        if(
-            op_array && op_array->filename
-        ) {
+        // zend_op_array *ops = &edata->func->op_array;
+        if (op_array && op_array->filename) {
             n->function.filename = strdup(ZSTR_VAL(op_array->filename));
             n->filename = strdup(n->function.filename);
         } else {
@@ -312,10 +311,10 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
     n->key = key;
 
     // realloc stack * FORP_STACK_REALLOC
-    if(FORP_G(stack_len)%FORP_STACK_REALLOC == 0) {
+    if (FORP_G(stack_len) % FORP_STACK_REALLOC == 0) {
         FORP_G(stack) = realloc(
             FORP_G(stack),
-            ((FORP_G(stack_len)/FORP_STACK_REALLOC)+1) * FORP_STACK_REALLOC * sizeof (forp_node_t)
+            ((FORP_G(stack_len)/FORP_STACK_REALLOC)+1) * FORP_STACK_REALLOC * sizeof(forp_node_t)
         );
     }
 
@@ -471,7 +470,7 @@ void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
         n = forp_open_node(EG(current_execute_data), op_array TSRMLS_CC);
         old_execute(op_array TSRMLS_CC);
 #else
-        n = forp_open_node(EG(current_execute_data)->prev_execute_data, NULL TSRMLS_CC);
+        n = forp_open_node(EG(current_execute_data)->prev_execute_data, &execute_data->func->op_array TSRMLS_CC);
         old_execute_ex(execute_data TSRMLS_CC);
 #endif
 
