@@ -36,45 +36,6 @@
 ZEND_DECLARE_MODULE_GLOBALS(forp);
 
 
-const zend_function_entry forp_functions[] = {
-    PHP_FE(forp_start, NULL)
-    PHP_FE(forp_end, NULL)
-    PHP_FE(forp_dump, NULL)
-    PHP_FE(forp_print, NULL)
-    PHP_FE(forp_info, NULL)
-    PHP_FE(forp_enable, NULL)
-    PHP_FE(forp_inspect, NULL)
-    PHP_FE(forp_json, NULL)
-    PHP_FE(forp_json_google_tracer, NULL)
-    {NULL,NULL,NULL} /*PHP_FE_END*/
-};
-
-zend_module_entry forp_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
-    STANDARD_MODULE_HEADER,
-#endif
-    "forp",
-    forp_functions,
-    PHP_MINIT(forp), // Main init
-    PHP_MSHUTDOWN(forp), // Main shutdown
-    PHP_RINIT(forp), // Request init
-    PHP_RSHUTDOWN(forp), // Request shutdown
-    PHP_MINFO(forp),
-#if ZEND_MODULE_API_NO >= 20010901
-    FORP_VERSION,
-#endif
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 2) || PHP_MAJOR_VERSION >= 6
-    NO_MODULE_GLOBALS,
-#endif
-    /*PHP_GINIT(forp), PHP_GSHUTDOWN(forp),*/
-    ZEND_MODULE_POST_ZEND_DEACTIVATE_N(forp),
-    STANDARD_MODULE_PROPERTIES_EX
-};
-
-#ifdef COMPILE_DL_FORP
-ZEND_GET_MODULE(forp)
-#endif
-
 PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("forp.max_nesting_level", "50", PHP_INI_ALL, OnUpdateLong, max_nesting_level, zend_forp_globals, forp_globals)
     STD_PHP_INI_BOOLEAN("forp.no_internals", "0", PHP_INI_ALL, OnUpdateBool, no_internals, zend_forp_globals, forp_globals)
@@ -171,10 +132,10 @@ PHP_RINIT_FUNCTION(forp) {
     FORP_G(inspect_len) = 0;
 
     // globals
-    //FORP_G(max_nesting_level) = 50;
-    //FORP_G(no_internals) = 0;
-    //FORP_G(inspect_depth_array) = 2;
-    //FORP_G(inspect_depth_object) = 2;
+    // FORP_G(max_nesting_level) = 50;
+    // FORP_G(no_internals) = 0;
+    // FORP_G(inspect_depth_array) = 2;
+    // FORP_G(inspect_depth_object) = 2;
 
     return SUCCESS;
 }
@@ -187,7 +148,7 @@ PHP_RSHUTDOWN_FUNCTION(forp) {
 #if PHP_VERSION_ID < 50500
         if (old_execute) {
             zend_execute = old_execute;
-    }
+        }
 #else
         if (old_execute_ex) {
             zend_execute_ex = old_execute_ex;
@@ -330,3 +291,43 @@ ZEND_FUNCTION(forp_json_google_tracer) {
     }
     forp_json_google_tracer(ZSTR_VAL(file_path) TSRMLS_CC);
 }
+
+
+const zend_function_entry forp_functions[] = {
+    PHP_FE(forp_start, NULL)
+    PHP_FE(forp_end, NULL)
+    PHP_FE(forp_dump, NULL)
+    PHP_FE(forp_print, NULL)
+    PHP_FE(forp_info, NULL)
+    PHP_FE(forp_enable, NULL)
+    PHP_FE(forp_inspect, NULL)
+    PHP_FE(forp_json, NULL)
+    PHP_FE(forp_json_google_tracer, NULL)
+    {NULL,NULL,NULL} /*PHP_FE_END*/
+};
+
+zend_module_entry forp_module_entry = {
+#if ZEND_MODULE_API_NO >= 20010901
+    STANDARD_MODULE_HEADER,
+#endif
+    "forp",
+    forp_functions,
+    PHP_MINIT(forp), // Main init
+    PHP_MSHUTDOWN(forp), // Main shutdown
+    PHP_RINIT(forp), // Request init
+    PHP_RSHUTDOWN(forp), // Request shutdown
+    PHP_MINFO(forp),
+#if ZEND_MODULE_API_NO >= 20010901
+    FORP_VERSION,
+#endif
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 2) || PHP_MAJOR_VERSION >= 6
+    NO_MODULE_GLOBALS,
+#endif
+    /*PHP_GINIT(forp), PHP_GSHUTDOWN(forp),*/
+    ZEND_MODULE_POST_ZEND_DEACTIVATE_N(forp),
+    STANDARD_MODULE_PROPERTIES_EX
+};
+
+#ifdef COMPILE_DL_FORP
+ZEND_GET_MODULE(forp)
+#endif

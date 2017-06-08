@@ -23,6 +23,7 @@
 
 #include "php.h"
 #include "php_ini.h"
+#include "Zend/zend_execute.h"
 
 #include "forp.h"
 #include "php_forp.h"
@@ -74,6 +75,7 @@ static void forp_populate_function(
         }
 
         function->function = strdup(ZSTR_VAL(edata->func->common.function_name));
+        php_printf("%s", function->function);
     } else {
 #if PHP_VERSION_ID >= 50399
         switch (function->type = edata->opline->extended_value) {
@@ -105,6 +107,7 @@ static void forp_populate_function(
     if (op_array && op_array->filename) {
         function->filename = strdup(ZSTR_VAL(op_array->filename));
     } else {
+        zend_op_array *op_array = &edata->func->op_array;
         if (op_array && op_array->filename) {
             function->filename = strdup(ZSTR_VAL(op_array->filename));
         } else {
@@ -292,11 +295,11 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
         }
     } else {
         // Root node
-        edata = EG(current_execute_data);
+        edata = EG(current_execute_data)->prev_execute_data;
         n->function.class = NULL;
         n->function.function = "{main}";
 
-        // zend_op_array *ops = &edata->func->op_array;
+        zend_op_array *op_array = &edata->func->op_array;
         if (op_array && op_array->filename) {
             n->function.filename = strdup(ZSTR_VAL(op_array->filename));
             n->filename = strdup(n->function.filename);
@@ -478,7 +481,6 @@ void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
     }
 }
 /* }}} */
-
 
 /* {{{ forp_execute_internal
  */
