@@ -31,7 +31,7 @@
 
 #include "ext/standard/info.h"
 #include "zend_exceptions.h"
-#include "zend_execute.h"
+#include "Zend/zend_vm.h"
 
 
 ZEND_DECLARE_MODULE_GLOBALS(forp);
@@ -44,10 +44,32 @@ PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("forp.inspect_depth_array", "2", PHP_INI_ALL, OnUpdateLong, inspect_depth_object, zend_forp_globals, forp_globals)
 PHP_INI_END()
 
+
+ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
+{
+    forp_node_t *n;
+
+    while (1) {
+        int ret;
+        ret = zend_vm_call_opcode_handler(execute_data);
+        if (ret != 0) {
+            if (ret < 0) {
+                return;
+            } else {
+                execute_data = EG(current_execute_data);
+            }
+        }
+    }
+
+    zend_error_noreturn(E_CORE_ERROR, "Arrived at end of main loop which shouldn't happen");
+}
+
+
 static void php_forp_init_globals(zend_forp_globals *forp_globals)
 {
     zval tmp;
     ZVAL_NULL(&tmp);
+
     forp_globals->started = 0;
     forp_globals->flags = FORP_FLAG_ALL;
     forp_globals->max_nesting_level = 50;
@@ -111,6 +133,12 @@ PHP_MINIT_FUNCTION(forp) {
     REGISTER_LONG_CONSTANT("FORP_FLAG_ALL", FORP_FLAG_ALL,
             CONST_CS | CONST_PERSISTENT);
 
+    // replace zend api
+    zend_execute_ex = execute_ex_replace;
+
+    old_execute_ex = zend_execute_ex;
+    zend_execute_ex = forp_execute_ex;
+
     return SUCCESS;
 }
 
@@ -142,8 +170,7 @@ PHP_RINIT_FUNCTION(forp) {
 }
 
 PHP_RSHUTDOWN_FUNCTION(forp) {
-
-    if(FORP_G(started)) {
+    if (FORP_G(started)) {
         // Restores zend api methods
 
 #if PHP_VERSION_ID < 50500
