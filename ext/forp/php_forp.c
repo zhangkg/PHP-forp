@@ -31,6 +31,7 @@
 
 #include "ext/standard/info.h"
 #include "zend_exceptions.h"
+#include "zend_execute.h"
 
 
 ZEND_DECLARE_MODULE_GLOBALS(forp);

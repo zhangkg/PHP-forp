@@ -23,7 +23,6 @@
 
 #include "php.h"
 #include "php_ini.h"
-#include "Zend/zend_execute.h"
 
 #include "forp.h"
 #include "php_forp.h"
@@ -453,12 +452,15 @@ void forp_end(TSRMLS_D) {
 }
 /* }}} */
 
+#undef EX
+#define EX(element) ((execute_data)->element)
+
 /* {{{ forp_execute
  */
 #if PHP_VERSION_ID < 50500
 void forp_execute(zend_op_array *op_array TSRMLS_DC) {
 #else
-void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
+ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
 #endif
     forp_node_t *n;
 
@@ -479,6 +481,7 @@ void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
 
         if(n && n->state < 2) forp_close_node(n TSRMLS_CC);
     }
+    php_printf("%s\n", "break foo");
 }
 /* }}} */
 
@@ -487,7 +490,7 @@ void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC) {
 #if PHP_VERSION_ID < 50500
 void forp_execute_internal(zend_execute_data *current_execute_data, int ret TSRMLS_DC)
 #else
-void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC)
+ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC)
 #endif
 {
     forp_node_t *n;
@@ -515,6 +518,7 @@ void forp_execute_internal(zend_execute_data *current_execute_data, zval *return
         }
         if(n && n->state < 2) forp_close_node(n TSRMLS_CC);
     }
+    php_printf("%s\n", "break bar");
 }
 /* }}} */
 

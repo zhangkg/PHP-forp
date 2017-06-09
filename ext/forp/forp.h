@@ -88,10 +88,10 @@ void forp_execute(zend_op_array *op_array TSRMLS_DC);
 void (*old_execute_internal)(zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 void forp_execute_internal(zend_execute_data *current_execute_data, int return_value_used TSRMLS_DC);
 #else
-static void (*old_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
-static void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
-static void (*old_execute_internal)(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
-static void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
+static void (*old_execute_ex) (zend_execute_data *execute_data TSRMLS_DC);
+static void (*old_execute_internal) (zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
+ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
+ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
 #endif
 
 
