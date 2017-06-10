@@ -46,15 +46,14 @@ PHP_INI_END()
 
 ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
 {
-    forp_node_t *n;
+    int ret;
     while (1) {
-        int ret;
         ret = zend_vm_call_opcode_handler(execute_data);
         if (ret != 0) {
             if (ret < 0) {
                 return;
             } else {
-                execute_data = EG(current_execute_data);
+                execute_data = EG(current_execute_data)->prev_execute_data->call;
             }
         }
     }
@@ -131,8 +130,6 @@ PHP_MINIT_FUNCTION(forp) {
     REGISTER_LONG_CONSTANT("FORP_FLAG_ALL", FORP_FLAG_ALL,
             CONST_CS | CONST_PERSISTENT);
 
-    // replace zend api
-    zend_execute_ex = execute_ex_replace;
 
     return SUCCESS;
 }
@@ -160,6 +157,10 @@ PHP_RINIT_FUNCTION(forp) {
     // FORP_G(no_internals) = 0;
     // FORP_G(inspect_depth_array) = 2;
     // FORP_G(inspect_depth_object) = 2;
+
+    // replace zend api
+    zend_execute_ex = execute_ex_replace;
+
 
     return SUCCESS;
 }
