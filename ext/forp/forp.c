@@ -75,7 +75,6 @@ static void forp_populate_function(
         }
 
         function->function = strdup(ZSTR_VAL(edata->func->common.function_name));
-        php_printf("%s", function->function);
     } else {
 #if PHP_VERSION_ID >= 50399
         switch (function->type = edata->opline->extended_value) {
@@ -401,8 +400,8 @@ void forp_start(TSRMLS_D) {
         zend_execute = forp_execute;
 #else
         /*init the execute pointer*/
-        old_execute_ex = (void *) EG(current_execute_data);
-        zend_execute_ex  = forp_execute_ex;
+        old_execute_ex = zend_execute_ex;
+        zend_execute_ex = forp_execute_ex;
 #endif
         if (!FORP_G(no_internals)) {
             old_execute_internal = zend_execute_internal;
@@ -457,33 +456,31 @@ void forp_end(TSRMLS_D) {
 
 /* {{{ forp_execute
  */
-void forp_execute_ex(zend_execute_data *execute_data)
+ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data)
 {
     forp_node_t *n;
+    zend_op_array *op_array = &(execute_data->func->op_array);
+    zend_execute_data *edata = execute_data->prev_execute_data;
 
-    n = forp_open_node(EG(current_execute_data)->prev_execute_data, &execute_data->func->op_array);
-    old_execute_ex(execute_data);
+    n = forp_open_node(edata, op_array);
+    old_execute_ex(execute_data TSRMLS_CC);
 
-    php_printf("%s\n", execute_data->func->op_array.filename);
     if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
 }
 /* }}} */
 
 /* {{{ forp_execute_internal
  */
-void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value)
+ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value)
 {
     forp_node_t *n;
+    zend_execute_data *current_data;
 
-    n = forp_open_node(EG(current_execute_data), NULL);
-    if (old_execute_internal) {
-        old_execute_internal(current_execute_data, return_value);
-    } else {
-        execute_internal(current_execute_data, return_value);
-    }
+    current_data = EG(current_execute_data);
+    n = forp_open_node(current_data, &current_data->func->op_array);
+    execute_internal(current_execute_data, return_value);
 
-    php_printf("%s\n", "hello break2");
-    if(n && n->state < 2) forp_close_node(n TSRMLS_CC);
+    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
 }
 /* }}} */
 

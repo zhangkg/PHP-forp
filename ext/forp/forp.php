@@ -28,7 +28,8 @@ function fibo( $x ) {
 }
 
 for( $i = 1; $i < 10; $i++) {
-    printf(
+		var_dump(1111);
+		printf(
         'fibo(%1$s) = %2$s'.$br,
         $i, fibo($i)
     );

@@ -44,11 +44,9 @@ PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("forp.inspect_depth_array", "2", PHP_INI_ALL, OnUpdateLong, inspect_depth_object, zend_forp_globals, forp_globals)
 PHP_INI_END()
 
-
 ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
 {
     forp_node_t *n;
-
     while (1) {
         int ret;
         ret = zend_vm_call_opcode_handler(execute_data);
@@ -135,9 +133,6 @@ PHP_MINIT_FUNCTION(forp) {
 
     // replace zend api
     zend_execute_ex = execute_ex_replace;
-
-    old_execute_ex = zend_execute_ex;
-    zend_execute_ex = forp_execute_ex;
 
     return SUCCESS;
 }
