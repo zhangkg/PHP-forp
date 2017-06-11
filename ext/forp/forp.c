@@ -105,6 +105,9 @@ static void forp_populate_function(
         }
 
         function->function = strdup(ZSTR_VAL(edata->func->common.function_name));
+    } else if (op_array && op_array->function_name) {
+        // get this filename
+        function->function = strdup(ZSTR_VAL(op_array->function_name));
     } else {
 #if PHP_VERSION_ID >= 50399
         switch (function->type = edata->opline->extended_value) {
@@ -133,15 +136,17 @@ static void forp_populate_function(
     }
 
     // Stores filename
-    if (op_array && op_array->filename) {
+    if (edata->func && ZEND_USER_CODE(edata->func->common.type)) {
+        op_array = &(edata->func->op_array);
+    } else if (edata->prev_execute_data && edata->prev_execute_data->func &&
+         ZEND_USER_CODE(edata->prev_execute_data->func->common.type)) {
+        op_array = &(edata->prev_execute_data->func->op_array); /* try using prev */
+    }
+
+    if (op_array) {
         function->filename = strdup(ZSTR_VAL(op_array->filename));
     } else {
-        zend_op_array *op_array = &edata->prev_execute_data->func->op_array;
-        if (op_array && op_array->filename) {
-            function->filename = strdup(ZSTR_VAL(op_array->filename));
-        } else {
-            function->filename = NULL;
-        }
+        function->filename = NULL;
     }
 }
 /* }}} */
@@ -157,7 +162,7 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
     // preparing current node
     // will be profiled after
     // forp_is_profiling_function test
-    n = malloc(sizeof (forp_node_t));
+    n = malloc(sizeof(forp_node_t));
 
     // getting function infos
     if (edata) {
@@ -225,8 +230,14 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
         }
 
         // Retrieves call lineno
-        if(edata->opline && n->filename) {
+        if (edata->opline && n->filename) {
             n->lineno = edata->opline->lineno;
+        } else if (edata && edata->prev_execute_data && edata->prev_execute_data->opline) {
+            n->lineno = edata->prev_execute_data->opline->lineno; /* try using prev */
+        } else if (op_array && op_array->opcodes) {
+            n->lineno = op_array->opcodes->lineno;
+        } else {
+            n->lineno = 0;
         }
 
         // Collects params
@@ -328,7 +339,13 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
         n->function.class = NULL;
         n->function.function = "{main}";
 
-        // zend_op_array *op_array = &edata->func->op_array;
+        if (edata->func && ZEND_USER_CODE(edata->func->common.type)) {
+            op_array = &(edata->func->op_array);
+        } else if (edata->prev_execute_data && edata->prev_execute_data->func &&
+             ZEND_USER_CODE(edata->prev_execute_data->func->common.type)) {
+            op_array = &(edata->prev_execute_data->func->op_array); /* try using prev */
+        }
+
         if (op_array && op_array->filename) {
             n->function.filename = strdup(ZSTR_VAL(op_array->filename));
             n->filename = strdup(n->function.filename);
@@ -353,9 +370,9 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
     FORP_G(stack_len)++;
     FORP_G(stack)[key] = n;
 
-    if(FORP_G(flags) & FORP_FLAG_MEMORY) {
+    // if(FORP_G(flags) & FORP_FLAG_MEMORY) {
         n->mem_begin = zend_memory_usage(0 TSRMLS_CC);
-    }
+    //}
 
     if(FORP_G(flags) & FORP_FLAG_TIME) {
         gettimeofday(&tv, NULL);
@@ -383,10 +400,10 @@ void forp_close_node(forp_node_t *n TSRMLS_DC) {
         n->time = n->time_end - n->time_begin;
     }
 
-    if(FORP_G(flags) & FORP_FLAG_MEMORY) {
+    // if(FORP_G(flags) & FORP_FLAG_MEMORY) {
         n->mem_end = zend_memory_usage(0 TSRMLS_CC);
         n->mem = n->mem_end - n->mem_begin;
-    }
+    // }
 
     if(n->function.highlight) {
         php_printf(FORP_HIGHLIGHT_END, n->caption != NULL ? n->caption : "", (n->time / 1000), (n->mem / 1024), n->level);
