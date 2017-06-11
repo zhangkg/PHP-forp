@@ -403,6 +403,7 @@ void forp_start(TSRMLS_D) {
         old_execute_ex = zend_execute_ex;
         zend_execute_ex = forp_execute_ex;
 #endif
+
         if (!FORP_G(no_internals)) {
             old_execute_internal = zend_execute_internal;
             zend_execute_internal = forp_execute_internal;
@@ -454,6 +455,7 @@ void forp_end(TSRMLS_D) {
 }
 /* }}} */
 
+
 /* {{{ forp_execute
  */
 ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data)
@@ -483,6 +485,7 @@ ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data
     if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
 }
 /* }}} */
+
 
 /* {{{ forp_stack_dump_var
  */

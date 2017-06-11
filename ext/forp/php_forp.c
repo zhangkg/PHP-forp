@@ -53,12 +53,11 @@ ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
             if (ret < 0) {
                 return;
             } else {
-                execute_data = EG(current_execute_data)->prev_execute_data->call;
+                execute_data = EG(current_execute_data);
             }
         }
     }
-
-    zend_error_noreturn(E_CORE_ERROR, "Arrived at end of main loop which shouldn't happen");
+    zend_error_noreturn(E_ERROR, "Arrived at end of main loop which shouldn't happen");
 }
 
 
@@ -109,6 +108,12 @@ PHP_MINIT_FUNCTION(forp) {
 
     REGISTER_INI_ENTRIES();
 
+    // replace zend api
+    zend_execute_ex = execute_ex_replace;
+
+    old_execute_internal = zend_execute_internal;
+    zend_execute_internal = forp_execute_internal;
+
     REGISTER_LONG_CONSTANT("FORP_FLAG_MEMORY", FORP_FLAG_MEMORY,
             CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("FORP_FLAG_TIME", FORP_FLAG_TIME,
@@ -157,10 +162,6 @@ PHP_RINIT_FUNCTION(forp) {
     // FORP_G(no_internals) = 0;
     // FORP_G(inspect_depth_array) = 2;
     // FORP_G(inspect_depth_object) = 2;
-
-    // replace zend api
-    zend_execute_ex = execute_ex_replace;
-
 
     return SUCCESS;
 }
