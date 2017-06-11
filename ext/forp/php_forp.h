@@ -61,7 +61,7 @@ PHP_MSHUTDOWN_FUNCTION(forp);
 PHP_RINIT_FUNCTION(forp);
 PHP_RSHUTDOWN_FUNCTION(forp);
 PHP_MINFO_FUNCTION(forp);
-ZEND_MODULE_POST_ZEND_DEACTIVATE_D(forp);
+extern ZEND_MODULE_POST_ZEND_DEACTIVATE_D(forp);
 
 /* Zend API proxies */
 #if PHP_VERSION_ID < 50500
@@ -72,7 +72,6 @@ void forp_execute_internal(zend_execute_data *current_execute_data, int return_v
 #else
 static void (*old_execute_ex) (zend_execute_data *execute_data TSRMLS_DC);
 static void (*old_execute_internal) (zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
-ZEND_API void execute_ex_replace(zend_execute_data *execute_data);
 ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
 ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
 #endif

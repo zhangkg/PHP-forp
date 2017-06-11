@@ -44,54 +44,6 @@ PHP_INI_BEGIN()
     STD_PHP_INI_ENTRY("forp.inspect_depth_array", "2", PHP_INI_ALL, OnUpdateLong, inspect_depth_object, zend_forp_globals, forp_globals)
 PHP_INI_END()
 
-ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
-{
-    int ret;
-    while (1) {
-        ret = zend_vm_call_opcode_handler(execute_data);
-        if (ret != 0) {
-            if (ret < 0) {
-                return;
-            } else {
-                execute_data = EG(current_execute_data);
-            }
-        }
-    }
-    zend_error_noreturn(E_ERROR, "Arrived at end of main loop which shouldn't happen");
-}
-
-
-/* {{{ forp_execute
- */
-ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data)
-{
-    forp_node_t *n;
-    zend_op_array *op_array = &(execute_data->func->op_array);
-    zend_execute_data *edata = EG(current_execute_data)->prev_execute_data;
-
-    n = forp_open_node(edata, op_array);
-    old_execute_ex(execute_data TSRMLS_CC);
-
-    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
-}
-/* }}} */
-
-/* {{{ forp_execute_internal
- */
-ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value)
-{
-    zend_execute_data *current_data;
-    forp_node_t *n;
-
-    current_data = EG(current_execute_data);
-    n = forp_open_node(current_data, NULL);
-    execute_internal(current_execute_data, return_value);
-
-    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
-}
-/* }}} */
-
-
 
 static void php_forp_init_globals(zend_forp_globals *forp_globals)
 {
@@ -139,16 +91,6 @@ PHP_MINIT_FUNCTION(forp) {
     ZEND_INIT_MODULE_GLOBALS(forp, php_forp_init_globals, NULL);
 
     REGISTER_INI_ENTRIES();
-
-    // replace zend api
-    zend_execute_ex = execute_ex_replace;
-
-    /*init the execute pointer*/
-    old_execute_ex = zend_execute_ex;
-    zend_execute_ex = forp_execute_ex;
-
-    old_execute_internal = zend_execute_internal;
-    zend_execute_internal = forp_execute_internal;
 
     REGISTER_LONG_CONSTANT("FORP_FLAG_MEMORY", FORP_FLAG_MEMORY,
             CONST_CS | CONST_PERSISTENT);

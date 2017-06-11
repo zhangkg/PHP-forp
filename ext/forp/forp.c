@@ -47,6 +47,36 @@ static inline double round(double val) {
 #include <sys/resource.h>
 #endif
 
+/* {{{ forp_execute
+ */
+ZEND_DLEXPORT void forp_execute_ex(zend_execute_data *execute_data)
+{
+    forp_node_t *n;
+    zend_op_array *op_array = &(execute_data->func->op_array);
+    zend_execute_data *edata = EG(current_execute_data)->prev_execute_data;
+
+    n = forp_open_node(edata, op_array);
+    old_execute_ex(execute_data TSRMLS_CC);
+
+    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ forp_execute_internal
+ */
+ZEND_DLEXPORT void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value)
+{
+    zend_execute_data *current_data;
+    forp_node_t *n;
+
+    current_data = EG(current_execute_data);
+    n = forp_open_node(current_data, NULL);
+    execute_internal(current_execute_data, return_value);
+
+    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
+}
+/* }}} */
+
 /* {{{ forp_populate_function
  */
 static void forp_populate_function(
