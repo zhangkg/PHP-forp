@@ -83,12 +83,6 @@ typedef struct forp_node_t {
 
 static void forp_populate_function(forp_function_t *function, zend_execute_data *edata, zend_op_array *op_array TSRMLS_DC);
 
-void forp_info(TSRMLS_D);
-
-void forp_start(TSRMLS_D);
-
-void forp_end(TSRMLS_D);
-
 forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TSRMLS_DC);
 
 void forp_close_node(forp_node_t *pn TSRMLS_DC);

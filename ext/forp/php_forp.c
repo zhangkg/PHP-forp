@@ -33,6 +33,129 @@
 #include "zend_exceptions.h"
 #include "Zend/zend_vm.h"
 
+ZEND_API void (*ori_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
+ZEND_API void (*ori_execute_internal)(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
+ZEND_API void execute_ex_replace(zend_execute_data *execute_data);
+ZEND_API void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
+ZEND_API void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
+
+
+ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
+{
+	while (1) {
+		int ret;
+		ret = zend_vm_call_opcode_handler(execute_data);
+		if (ret != 0) {
+			if (ret < 0) {
+				return;
+			} else {
+				execute_data = EG(current_execute_data);
+			}
+		}
+	}
+	zend_error_noreturn(E_CORE_ERROR, "Arrived at end of main loop which shouldn't happen");
+}
+
+
+/* {{{ forp_execute
+ */
+ZEND_API void forp_execute_ex(zend_execute_data *execute_data)
+{
+    forp_node_t *n;
+    zend_op_array *op_array = &(execute_data->func->op_array);
+    zend_execute_data *edata = EG(current_execute_data)->prev_execute_data;
+
+    n = forp_open_node(edata, op_array);
+    ori_execute_ex(execute_data TSRMLS_CC);
+
+    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
+}
+/* }}} */
+
+
+/* {{{ forp_execute_internal
+ */
+ZEND_API void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value)
+{
+    zend_execute_data *current_data;
+    forp_node_t *n;
+
+    current_data = EG(current_execute_data);
+    n = forp_open_node(current_data, NULL);
+    execute_internal(current_execute_data, return_value);
+
+    if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
+}
+/* }}} */
+
+
+/* {{{ forp_start
+ */
+void forp_start(TSRMLS_D) {
+    if(FORP_G(started)) {
+        php_error_docref(
+            NULL TSRMLS_CC,
+            E_NOTICE,
+            "forp is already started."
+            );
+    } else {
+        FORP_G(started) = 1;
+
+#if HAVE_SYS_RESOURCE_H
+        if(FORP_G(flags) & FORP_FLAG_CPU) {
+            struct rusage ru;
+            getrusage(RUSAGE_SELF, &ru);
+            FORP_G(utime) = ru.ru_utime.tv_sec * 1000000.0 + ru.ru_utime.tv_usec;
+            FORP_G(stime) = ru.ru_stime.tv_sec * 1000000.0 + ru.ru_stime.tv_usec;
+        }
+#endif
+
+        FORP_G(main) = forp_open_node(NULL, NULL TSRMLS_CC);
+    }
+}
+/* }}} */
+
+/* {{{ forp_end
+ */
+void forp_end(TSRMLS_D) {
+
+    if(FORP_G(started)) {
+
+#if HAVE_SYS_RESOURCE_H
+        if(FORP_G(flags) & FORP_FLAG_CPU) {
+            struct rusage ru;
+            getrusage(RUSAGE_SELF, &ru);
+            FORP_G(utime) = (ru.ru_utime.tv_sec * 1000000.0 + ru.ru_utime.tv_usec) - FORP_G(utime);
+            FORP_G(stime) = (ru.ru_stime.tv_sec * 1000000.0 + ru.ru_stime.tv_usec) - FORP_G(stime);
+        }
+#endif
+
+        // Closing ancestors
+        while(FORP_G(current_node)) {
+            forp_close_node(FORP_G(current_node) TSRMLS_CC);
+        }
+
+        // Restores Zend API methods
+#if PHP_VERSION_ID < 50500
+        if (old_execute) {
+            zend_execute = old_execute;
+            old_execute = 0;
+        }
+#else
+        if (ori_execute_ex) {
+            zend_execute_ex = ori_execute_ex;
+            ori_execute_ex = 0;
+        }
+#endif
+        if (!FORP_G(no_internals)) {
+            zend_execute_internal = ori_execute_internal;
+        }
+        // Stop
+        FORP_G(started) = 0;
+    }
+}
+/* }}} */
+
 
 ZEND_DECLARE_MODULE_GLOBALS(forp);
 
@@ -91,6 +214,21 @@ PHP_MINIT_FUNCTION(forp) {
     ZEND_INIT_MODULE_GLOBALS(forp, php_forp_init_globals, NULL);
 
     REGISTER_INI_ENTRIES();
+
+    // Proxying zend api methods
+#if PHP_VERSION_ID < 50500
+    old_execute = zend_execute;
+    zend_execute = forp_execute;
+#else
+    /*init the execute pointer*/
+    ori_execute_ex = zend_execute_ex;
+    zend_execute_ex = forp_execute_ex;
+#endif
+
+    if (!FORP_G(no_internals)) {
+        ori_execute_internal = zend_execute_internal;
+        zend_execute_internal = forp_execute_internal;
+    }
 
     REGISTER_LONG_CONSTANT("FORP_FLAG_MEMORY", FORP_FLAG_MEMORY,
             CONST_CS | CONST_PERSISTENT);
@@ -153,13 +291,13 @@ PHP_RSHUTDOWN_FUNCTION(forp) {
             zend_execute = old_execute;
         }
 #else
-        if (old_execute_ex) {
-            zend_execute_ex = old_execute_ex;
+        if (ori_execute_ex) {
+            zend_execute_ex = ori_execute_ex;
         }
 #endif
 
         if (!FORP_G(no_internals)) {
-            zend_execute_internal = old_execute_internal;
+            zend_execute_internal = ori_execute_internal;
         }
     }
 
