@@ -33,12 +33,6 @@
 #include "zend_exceptions.h"
 #include "Zend/zend_vm.h"
 
-ZEND_API void (*ori_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
-ZEND_API void (*ori_execute_internal)(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
-ZEND_API void execute_ex_replace(zend_execute_data *execute_data);
-ZEND_API void forp_execute_ex(zend_execute_data *execute_data TSRMLS_DC);
-ZEND_API void forp_execute_internal(zend_execute_data *current_execute_data, zval *return_value TSRMLS_DC);
-
 
 ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
 {
@@ -109,6 +103,21 @@ void forp_start(TSRMLS_D) {
             FORP_G(stime) = ru.ru_stime.tv_sec * 1000000.0 + ru.ru_stime.tv_usec;
         }
 #endif
+
+        // Proxying zend api methods
+#if PHP_VERSION_ID < 50500
+        old_execute = zend_execute;
+        zend_execute = forp_execute;
+#else
+        /*init the execute pointer*/
+        ori_execute_ex = zend_execute_ex;
+        zend_execute_ex = forp_execute_ex;
+#endif
+
+        if (!FORP_G(no_internals)) {
+            ori_execute_internal = zend_execute_internal;
+            zend_execute_internal = forp_execute_internal;
+        }
 
         FORP_G(main) = forp_open_node(NULL, NULL TSRMLS_CC);
     }
@@ -214,21 +223,6 @@ PHP_MINIT_FUNCTION(forp) {
     ZEND_INIT_MODULE_GLOBALS(forp, php_forp_init_globals, NULL);
 
     REGISTER_INI_ENTRIES();
-
-    // Proxying zend api methods
-#if PHP_VERSION_ID < 50500
-    old_execute = zend_execute;
-    zend_execute = forp_execute;
-#else
-    /*init the execute pointer*/
-    ori_execute_ex = zend_execute_ex;
-    zend_execute_ex = forp_execute_ex;
-#endif
-
-    if (!FORP_G(no_internals)) {
-        ori_execute_internal = zend_execute_internal;
-        zend_execute_internal = forp_execute_internal;
-    }
 
     REGISTER_LONG_CONSTANT("FORP_FLAG_MEMORY", FORP_FLAG_MEMORY,
             CONST_CS | CONST_PERSISTENT);
