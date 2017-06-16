@@ -1,0 +1,18 @@
+php_forp.lo: /Users/bilibili/debug/PHP-forp/ext/forp/php_forp.c
+	$(LIBTOOL) --mode=compile $(CC)  -I. -I/Users/bilibili/debug/PHP-forp/ext/forp $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)  -c /Users/bilibili/debug/PHP-forp/ext/forp/php_forp.c -o php_forp.lo 
+forp.lo: /Users/bilibili/debug/PHP-forp/ext/forp/forp.c
+	$(LIBTOOL) --mode=compile $(CC)  -I. -I/Users/bilibili/debug/PHP-forp/ext/forp $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)  -c /Users/bilibili/debug/PHP-forp/ext/forp/forp.c -o forp.lo 
+forp_annotation.lo: /Users/bilibili/debug/PHP-forp/ext/forp/forp_annotation.c
+	$(LIBTOOL) --mode=compile $(CC)  -I. -I/Users/bilibili/debug/PHP-forp/ext/forp $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)  -c /Users/bilibili/debug/PHP-forp/ext/forp/forp_annotation.c -o forp_annotation.lo 
+forp_string.lo: /Users/bilibili/debug/PHP-forp/ext/forp/forp_string.c
+	$(LIBTOOL) --mode=compile $(CC)  -I. -I/Users/bilibili/debug/PHP-forp/ext/forp $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)  -c /Users/bilibili/debug/PHP-forp/ext/forp/forp_string.c -o forp_string.lo 
+forp_log.lo: /Users/bilibili/debug/PHP-forp/ext/forp/forp_log.c
+	$(LIBTOOL) --mode=compile $(CC)  -I. -I/Users/bilibili/debug/PHP-forp/ext/forp $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)  -c /Users/bilibili/debug/PHP-forp/ext/forp/forp_log.c -o forp_log.lo 
+forp_json.lo: /Users/bilibili/debug/PHP-forp/ext/forp/forp_json.c
+	$(LIBTOOL) --mode=compile $(CC)  -I. -I/Users/bilibili/debug/PHP-forp/ext/forp $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS)  -c /Users/bilibili/debug/PHP-forp/ext/forp/forp_json.c -o forp_json.lo 
+$(phplibdir)/forp.la: ./forp.la
+	$(LIBTOOL) --mode=install cp ./forp.la $(phplibdir)
+
+./forp.la: $(shared_objects_forp) $(FORP_SHARED_DEPENDENCIES)
+	$(LIBTOOL) --mode=link $(CC) $(COMMON_FLAGS) $(CFLAGS_CLEAN) $(EXTRA_CFLAGS) $(LDFLAGS) -o $@ -export-dynamic -avoid-version -prefer-pic -module -rpath $(phplibdir) $(EXTRA_LDFLAGS) $(shared_objects_forp) $(FORP_SHARED_LIBADD)
+

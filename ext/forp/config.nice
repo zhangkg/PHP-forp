@@ -1,0 +1,8 @@
+#! /bin/sh
+#
+# Created by configure
+
+'./configure' \
+'--with-php-config=/Users/bilibili/debug/php70-debug/bin/php-config' \
+'--enable-debug' \
+"$@"
