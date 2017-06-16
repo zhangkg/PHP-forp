@@ -33,22 +33,7 @@
 #include "zend_exceptions.h"
 #include "Zend/zend_vm.h"
 
-
-ZEND_API void execute_ex_replace(zend_execute_data *execute_data)
-{
-	while (1) {
-		int ret;
-		ret = zend_vm_call_opcode_handler(execute_data);
-		if (ret != 0) {
-			if (ret < 0) {
-				return;
-			} else {
-				execute_data = EG(current_execute_data);
-			}
-		}
-	}
-	zend_error_noreturn(E_CORE_ERROR, "Arrived at end of main loop which shouldn't happen");
-}
+static int le_forp;
 
 
 /* {{{ forp_execute
@@ -76,7 +61,12 @@ ZEND_API void forp_execute_internal(zend_execute_data *current_execute_data, zva
 
     current_data = EG(current_execute_data);
     n = forp_open_node(current_data, NULL);
-    execute_internal(current_execute_data, return_value);
+
+    if (ori_execute_internal) {
+        ori_execute_internal(current_execute_data, return_value);
+    } else {
+        execute_internal(current_execute_data, return_value);
+    }
 
     if (n && n->state < 2) forp_close_node(n TSRMLS_CC);
 }
@@ -104,22 +94,7 @@ void forp_start(TSRMLS_D) {
         }
 #endif
 
-        // Proxying zend api methods
-#if PHP_VERSION_ID < 50500
-        old_execute = zend_execute;
-        zend_execute = forp_execute;
-#else
-        /*init the execute pointer*/
-        ori_execute_ex = zend_execute_ex;
-        zend_execute_ex = forp_execute_ex;
-#endif
-
-        if (!FORP_G(no_internals)) {
-            ori_execute_internal = zend_execute_internal;
-            zend_execute_internal = forp_execute_internal;
-        }
-
-        FORP_G(main) = forp_open_node(NULL, NULL TSRMLS_CC);
+        // FORP_G(main) = forp_open_node(NULL, NULL TSRMLS_CC);
     }
 }
 /* }}} */
@@ -167,6 +142,49 @@ void forp_end(TSRMLS_D) {
 
 
 ZEND_DECLARE_MODULE_GLOBALS(forp);
+
+
+const zend_function_entry forp_functions[] = {
+    PHP_FE(forp_start, NULL)
+    PHP_FE(forp_end, NULL)
+    PHP_FE(forp_dump, NULL)
+    PHP_FE(forp_print, NULL)
+    PHP_FE(forp_info, NULL)
+    PHP_FE(forp_enable, NULL)
+    PHP_FE(forp_inspect, NULL)
+    PHP_FE(forp_json, NULL)
+    PHP_FE(forp_json_google_tracer, NULL)
+    PHP_FE_END  /*PHP_FE_END*/
+};
+
+zend_module_entry forp_module_entry = {
+#if ZEND_MODULE_API_NO >= 20010901
+    STANDARD_MODULE_HEADER,
+#endif
+    "forp",
+    forp_functions,
+    PHP_MINIT(forp), // Main init
+    PHP_MSHUTDOWN(forp), // Main shutdown
+    PHP_RINIT(forp), // Request init
+    PHP_RSHUTDOWN(forp), // Request shutdown
+    PHP_MINFO(forp),
+#if ZEND_MODULE_API_NO >= 20010901
+    FORP_VERSION,
+#endif
+#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 2) || PHP_MAJOR_VERSION >= 6
+    NO_MODULE_GLOBALS,
+#endif
+    /*PHP_GINIT(forp), PHP_GSHUTDOWN(forp),*/
+    ZEND_MODULE_POST_ZEND_DEACTIVATE_N(forp),
+    STANDARD_MODULE_PROPERTIES_EX
+};
+
+#ifdef COMPILE_DL_FORP
+#ifdef ZTS
+ZEND_TSRMLS_CACHE_DEFINE()
+#endif
+ZEND_GET_MODULE(forp)
+#endif
 
 
 PHP_INI_BEGIN()
@@ -224,6 +242,23 @@ PHP_MINIT_FUNCTION(forp) {
 
     REGISTER_INI_ENTRIES();
 
+
+    // Proxying zend api methods
+#if PHP_VERSION_ID < 50500
+    old_execute = zend_execute;
+    zend_execute = forp_execute;
+#else
+    /*init the execute pointer*/
+    ori_execute_ex = zend_execute_ex;
+    zend_execute_ex = forp_execute_ex;
+#endif
+
+    if (!FORP_G(no_internals)) {
+        ori_execute_internal = zend_execute_internal;
+        zend_execute_internal = forp_execute_internal;
+    }
+
+
     REGISTER_LONG_CONSTANT("FORP_FLAG_MEMORY", FORP_FLAG_MEMORY,
             CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("FORP_FLAG_TIME", FORP_FLAG_TIME,
@@ -250,6 +285,9 @@ PHP_MINIT_FUNCTION(forp) {
 }
 
 PHP_RINIT_FUNCTION(forp) {
+#if defined(COMPILE_DL_FORP) && defined(ZTS)
+	ZEND_TSRMLS_CACHE_UPDATE();
+#endif
 
     zval tmp;
     ZVAL_NULL(&tmp);
@@ -426,43 +464,3 @@ ZEND_FUNCTION(forp_json_google_tracer) {
     }
     forp_json_google_tracer(ZSTR_VAL(file_path) TSRMLS_CC);
 }
-
-
-const zend_function_entry forp_functions[] = {
-    PHP_FE(forp_start, NULL)
-    PHP_FE(forp_end, NULL)
-    PHP_FE(forp_dump, NULL)
-    PHP_FE(forp_print, NULL)
-    PHP_FE(forp_info, NULL)
-    PHP_FE(forp_enable, NULL)
-    PHP_FE(forp_inspect, NULL)
-    PHP_FE(forp_json, NULL)
-    PHP_FE(forp_json_google_tracer, NULL)
-    {NULL,NULL,NULL} /*PHP_FE_END*/
-};
-
-zend_module_entry forp_module_entry = {
-#if ZEND_MODULE_API_NO >= 20010901
-    STANDARD_MODULE_HEADER,
-#endif
-    "forp",
-    forp_functions,
-    PHP_MINIT(forp), // Main init
-    PHP_MSHUTDOWN(forp), // Main shutdown
-    PHP_RINIT(forp), // Request init
-    PHP_RSHUTDOWN(forp), // Request shutdown
-    PHP_MINFO(forp),
-#if ZEND_MODULE_API_NO >= 20010901
-    FORP_VERSION,
-#endif
-#if (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 2) || PHP_MAJOR_VERSION >= 6
-    NO_MODULE_GLOBALS,
-#endif
-    /*PHP_GINIT(forp), PHP_GSHUTDOWN(forp),*/
-    ZEND_MODULE_POST_ZEND_DEACTIVATE_N(forp),
-    STANDARD_MODULE_PROPERTIES_EX
-};
-
-#ifdef COMPILE_DL_FORP
-ZEND_GET_MODULE(forp)
-#endif
