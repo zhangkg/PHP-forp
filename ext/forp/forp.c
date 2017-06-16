@@ -295,6 +295,25 @@ forp_node_t *forp_open_node(zend_execute_data *edata, zend_op_array *op_array TS
             n->filename = strdup(FORP_G(current_node)->function.filename);
         }
 
+#if PHP_VERSION_ID >= 70000
+        /* FIXME Sometimes execute_data->opline can be a interger NOT pointer.
+         * I dont know how to handle it, this just make it works. */
+        if (edata && edata->opline && edata->prev_execute_data &&
+                edata->func && edata->func->op_array.opcodes == NULL) {
+            edata = edata->prev_execute_data;
+        }
+
+        /* skip internal handler */
+        if (edata && edata->opline && edata->prev_execute_data &&
+                edata->opline->opcode != ZEND_DO_FCALL &&
+                edata->opline->opcode != ZEND_DO_ICALL &&
+                edata->opline->opcode != ZEND_DO_UCALL &&
+                edata->opline->opcode != ZEND_DO_FCALL_BY_NAME &&
+                edata->opline->opcode != ZEND_INCLUDE_OR_EVAL) {
+            edata = edata->prev_execute_data;
+        }
+#endif
+
         // Retrieves call lineno
         if (edata->opline && n->filename) {
             n->lineno = edata->opline->lineno;
